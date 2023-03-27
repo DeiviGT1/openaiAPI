@@ -1,109 +1,75 @@
-import openai
-import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials
-from flask import Flask, render_template, request
+import json
+import requests
+import base64
+import urllib.parse
+from flask import request
+
+# Client Keys
+CLIENT_ID = "e68285acd05e49bb9134e5bcc2622778"
+CLIENT_SECRET = "9c30bbe0f3ed49ae83dab84643141535"
+
+#Spotify URLS
+SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
+SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
+SPOTIFY_API_BASE_URL = "https://api.spotify.com"
+API_VERSION = "v1"
+SPOTIFY_API_URL = f'{SPOTIFY_API_BASE_URL}/{API_VERSION}'
+
+SCOPE = "user-library-read"
+STATE = ""
+SHOW_DIALOG_bool = True
+SHOW_DIALOG_str = str(SHOW_DIALOG_bool).lower()
 
 
-#authentication stuff
-openai.api_key = "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"
+#Server-side Parameters
+def get_redirect_uri():
+    URL_URI = request.url_root
+    REDIRECT = f"{URL_URI}callback"
+    return REDIRECT
 
-spotify_client_id = "e68285acd05e49bb9134e5bcc2622778"
-spotify_client_secret = "9c30bbe0f3ed49ae83dab84643141535"
+#Authorization of application with spotify
+def app_Authorization():
+    REDIRECT_URI = get_redirect_uri()
+    auth_query_parameters = {
+        "response_type": "code",
+        "redirect_uri": REDIRECT_URI,
+        "scope": SCOPE,
+        # "state": STATE,
+        # "show_dialog": SHOW_DIALOG_str,
+        "client_id": CLIENT_ID
+    }
+    url_args = "&".join(["{}={}".format(key, urllib.parse.quote(val)) for key,val in auth_query_parameters.items()])
+    auth_url = f"{SPOTIFY_AUTH_URL}/?{url_args}"
+    return auth_url
 
-spotify_client_credentials_manager = SpotifyClientCredentials(
-    client_id=spotify_client_id,
-    client_secret=spotify_client_secret
-)
-spotify = spotipy.Spotify(
-    client_credentials_manager=spotify_client_credentials_manager
-)
+#User allows us to acces there spotify
+def user_Authorization():
+    REDIRECT_URI = get_redirect_uri()
+    auth_token = request.args['code']
+    code_payload = {
+        "grant_type": "authorization_code",
+        "code": str(auth_token),
+        "redirect_uri": REDIRECT_URI
+    }
+    client_str = f'{CLIENT_ID}:{CLIENT_SECRET}'
+    client_encode = base64.b64encode(client_str.encode("utf-8"))
+    client_encode = str(client_encode, "utf-8")
+    headers = {"Authorization": f"Basic {client_encode}"}
+    post_request = requests.post(SPOTIFY_TOKEN_URL, data=code_payload, headers=headers)
 
-#Flask setup
-app = Flask(__name__)
+    # Tokens are Returned to Application
+    response_data = json.loads(post_request.text)
+    access_token = response_data["access_token"]
+    refresh_token = response_data["refresh_token"]
+    token_type = response_data["token_type"]
+    expires_in = response_data["expires_in"]
 
-#Uses OpenAI to generate tags for a song that user inputs, with DaVinci 3 engine
-def get_song_tags(song_title):
-    prompt = f"Generate 5-7 one word tags (separated by commas) for this song that are in lowercase. Do not include anything else except the letters.'{song_title}'."
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=prompt,
-        max_tokens=100,
-        n=1,
-        stop=None,
-        temperature=0.5,
-    )
-    tags = response.choices[0].text.strip()
-    return tags
+    # Use the access token to access Spotify API
+    authorization_header = {"Authorization":f"Bearer {access_token}"}
+    return authorization_header
 
-#Uses OpenAI to make a playlist of songs that match the tags
-def generate_playlist(tags):
-    prompt=f"Generate a playlist of 10, real songs, that match these tags: '{tags}'"
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=prompt,
-        max_tokens=100,
-        n=1,
-        stop=None,
-        temperature=0.5,
-    )
-    playlist = response.choices[0].text.strip()
-    return playlist
-
-#renders the web page
-@app.route("/")
-def home():
-    return render_template("index.html")
-
-# #returns the playlist
-# @app.route("/song", methods=["POST","GET"])
-# def get_input():
-#     formattedPlaylist = ""
-#     real_songs = []
-#     song = request.form["song"]
-#     tags = get_song_tags(song)
-#     playlist = generate_playlist(tags)
-
-#     for song in playlist.split("\n"):
-#         result = spotify.search(q=song, type="track", limit=1)
-#         if len(result["tracks"]["items"]) > 0:
-#             track_id = result["tracks"]["items"][0]["id"]
-#             track_url = result["tracks"]["items"][0]["external_urls"]["spotify"]
-#             real_songs.append(result["tracks"]["items"][0]["name"] + " \n" + track_url)
-
-#     if len(real_songs) > 0:
-#         formattedPlaylist += "Here's your playlist:\n"
-#         for song1 in real_songs:
-#             formattedPlaylist+= f"- {song1}\n"
-
-#     return formattedPlaylist
-
-if __name__ == '__main__':
-    app.run(host='localhost', port=5000, debug=True)
-
-
-
-# # #console version
-# # print("Welcome to SpotifAI.")
-# # #Asks user to put in their favorite song, generates tags and then uses the tags to generate a playlist
-# # song = input("Input a song to get started: ")
-# # tags = get_song_tags(song)
-# # print(f"Here are some tags for the song '{song}': {tags}")
-# # playlist = generate_playlist(tags)
-
-# # #Uses spotify to check if the songs that were generated were real and not just made up by the AI.
-# # #Gets the full name of the song and a playable link.
-# # real_songs = []
-
-# # for song in playlist.split("\n"):
-# #     result = spotify.search(q=song, type="track", limit=1)
-# #     if len(result["tracks"]["items"]) > 0:
-# #         track_id = result["tracks"]["items"][0]["id"]
-# #         track_url = result["tracks"]["items"][0]["external_urls"]["spotify"]
-# #         real_songs.append(result["tracks"]["items"][0]["name"] + " \n" + track_url)
-
-# # if len(real_songs) > 0:
-# #     print("Here's your playlist:")
-# #     for song in real_songs:
-# #         print(f"- {song}")
-# # else:
-# #     print("")
+    # Get user albums data
+    artist_api_endpoint = (f"{profile['href']}/albums?limit=" + str(limit) + "&offset=" + str(offset))
+    artist_response = requests.get(artist_api_endpoint, headers=header)
+    artist_data = json.loads(artist_response.text)
+    return artist_data
