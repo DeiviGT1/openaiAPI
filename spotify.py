@@ -1,17 +1,14 @@
 from flask import request
-import openai
+import os
 import json
 import requests
 import base64
 import urllib.parse
-from flask import request
-
-#authentication stuff
-openai.api_key = "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"
 
 # Client Keys
+
 CLIENT_ID = "e68285acd05e49bb9134e5bcc2622778"
-CLIENT_SECRET = "9c30bbe0f3ed49ae83dab84643141535"
+CLIENT_SECRET = os.getenv("SPOTIFY_API_KEY")
 
 #Spotify URLS
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
@@ -80,11 +77,16 @@ def Profile_Data(header):
     return profile_data
 
 # Get user albums data
-# def get_user_liked_songs(header):
-#     # Get profile data
-#     user_profile_api_endpoint = f"{SPOTIFY_API_URL}/me/tracks"
-#     profile_response = requests.get(user_profile_api_endpoint, headers=header, params={"limit": 50})
-#     profile_data = json.loads(profile_response.text)
-#     return profile_data
+def get_user_liked_songs(header):
+    # Get profile data
+    user_profile_api_endpoint = f"{SPOTIFY_API_URL}/me/tracks"
+    profile_response = requests.get(user_profile_api_endpoint, headers=header, params={"limit": 50})
+    profile_data = json.loads(profile_response.text)
+    return profile_data
 
-
+def search_song(header, song_name):
+    # Get profile data
+    user_profile_api_endpoint = f"{SPOTIFY_API_URL}/search"
+    profile_response = requests.get(user_profile_api_endpoint, headers=header, params={"q": song_name, "type": "track", "limit": 1})
+    profile_data = json.loads(profile_response.text)
+    return profile_data

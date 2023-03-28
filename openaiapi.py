@@ -1,7 +1,8 @@
 import openai
+import os
 
 #authentication stuff
-openai.api_key = "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"
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 #Uses OpenAI to generate tags for a song that user inputs, with DaVinci 3 engine
 def get_song_tags(song_title):

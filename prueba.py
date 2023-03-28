@@ -1,14 +1,20 @@
 import openai
+import os
 
-openai.api_key = "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"
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-model_engine = "text-davinci-003"
-prompt = "Hello, how are you?"
+#create a function to reply
+def reply(prompt):
+    response = openai.Completion.create(
+        engine="davinci",
+        prompt=prompt,
+        temperature=0.9,
+        max_tokens=150,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0.6,
+        stop=["\n", " Human:", " AI:"]
+    )
+    return response.choices[0].text
 
-completion = openai.Completion.create(
-    engine=model_engine,
-    prompt=prompt,
-)
-
-response = completion.choices[0].text
-print(response)
+print(reply("Human: Hello, how are you doing today?\nAI:"))
