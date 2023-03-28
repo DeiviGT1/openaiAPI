@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect
-from spotify import app_Authorization, user_Authorization, get_user_liked_songs
+from spotify import app_Authorization, user_Authorization, get_user_liked_songs, Profile_Data
 
 app = Flask(__name__, template_folder="templates")
 
@@ -16,11 +16,16 @@ def login():
 @app.route("/callback")
 def callback():
     authorization_header = user_Authorization()
-    liked_songs = get_user_liked_songs(authorization_header)
-    return liked_songs
+
+    profile_data = Profile_Data(authorization_header)
+    user_id = profile_data["id"]
+    user_name = profile_data["display_name"]
+
+    user_liked_songs = get_user_liked_songs(authorization_header)
+    return user_liked_songs
 
 if __name__ == '__main__':
-    app.run(host='localhost', port=5000, debug=True)
+    app.run(host='localhost', port=8080, debug=True)
 
 # #returns the playlist
 # @app.route("/song", methods=["POST","GET"])

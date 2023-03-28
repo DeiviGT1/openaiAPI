@@ -31,6 +31,7 @@ def get_redirect_uri():
     REDIRECT = f"{URL_URI}callback"
     return REDIRECT
 
+#Authorization of application with spotify
 def app_Authorization():
     REDIRECT_URI = get_redirect_uri()
     auth_query_parameters = {
@@ -45,6 +46,7 @@ def app_Authorization():
     auth_url = f"{SPOTIFY_AUTH_URL}/?{url_args}"
     return auth_url
 
+#User allows us to acces there spotify
 def user_Authorization():
     REDIRECT_URI = get_redirect_uri()
     auth_token = request.args['code']
@@ -70,13 +72,19 @@ def user_Authorization():
     authorization_header = {"Authorization":f"Bearer {access_token}"}
     return authorization_header
 
-# Get user albums data
-def get_user_liked_songs():
-    authorization_header = user_Authorization()
-    # Get profile data
-    user_profile_api_endpoint = f"{SPOTIFY_API_URL}/me/tracks"
-    profile_response = requests.get(user_profile_api_endpoint, headers=authorization_header)
+def Profile_Data(header):
+    # Get user profile data
+    user_profile_api_endpoint = f"{SPOTIFY_API_URL}/me"
+    profile_response = requests.get(user_profile_api_endpoint, headers=header)
     profile_data = json.loads(profile_response.text)
     return profile_data
+
+# Get user albums data
+# def get_user_liked_songs(header):
+#     # Get profile data
+#     user_profile_api_endpoint = f"{SPOTIFY_API_URL}/me/tracks"
+#     profile_response = requests.get(user_profile_api_endpoint, headers=header, params={"limit": 50})
+#     profile_data = json.loads(profile_response.text)
+#     return profile_data
 
 
