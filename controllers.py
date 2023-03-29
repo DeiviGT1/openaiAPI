@@ -29,8 +29,9 @@ def get_input():
     header = session.get("user")
     formattedPlaylist = ""
     real_songs = []
+    playlist_dict ={}
     # song = request.form["song"]
-    song = "rockstar"
+    song = "lo que hay x aqui"
     tags = get_song_tags(song)
     playlist = generate_playlist(tags)
 
@@ -40,13 +41,9 @@ def get_input():
             track_id = result["tracks"]["items"][0]["id"]
             track_url = result["tracks"]["items"][0]["external_urls"]["spotify"]
             real_songs.append(result["tracks"]["items"][0]["name"] + " \n" + track_url)
+            playlist_dict[result["tracks"]["items"][0]["name"]] = track_url
 
-    if len(real_songs) > 0:
-        formattedPlaylist += "Here's your playlist:\n"
-        for song1 in real_songs:
-            formattedPlaylist+= f"- {song1}\n"
-
-    return formattedPlaylist
+    return playlist_dict
 
 if __name__ == '__main__':
-    app.run(host='localhost', port=8080, debug=True)
+    app.run(host='localhost', port=2000, debug=True)
