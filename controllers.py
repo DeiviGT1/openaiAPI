@@ -1,16 +1,15 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import render_template, request, redirect, session, Blueprint
 from spotify import app_Authorization, search_song, user_Authorization
 from openaiapi import generar_respuesta
 
-app = Flask(__name__, template_folder="templates")
-app.secret_key = 'david'
+mod = Blueprint('controllers', __name__, url_prefix='')
 
 #renders the web page
-@app.route("/")
+@mod.route("/")
 def home():
     return render_template("index.html")
 
-@app.route("/login", methods=["POST","GET"])
+@mod.route("/login", methods=["POST","GET"])
 def login():
     auth_url = app_Authorization()
     session["spotify"] = auth_url
@@ -20,16 +19,15 @@ def login():
     session["artist"] = request.form["artist"]
     return redirect(auth_url)
 
-@app.route("/callback")
+@mod.route("/callback")
 def callback():
     header = user_Authorization()
     session["user"] = header
     return redirect("/song")
 
-@app.route("/song", methods=["POST","GET"])
+@mod.route("/song", methods=["POST","GET"])
 def get_input():
     header = session.get("user")
-    formattedPlaylist = ""
     real_songs = []
     song = session.get("song")
     artist = session.get("artist")
@@ -52,6 +50,3 @@ def get_input():
             real_songs.append({"name": track_name, "artist":track_artists , "url": track_url, "image": track_image})
 
     return render_template("songs.html", songs = real_songs)
-
-if __name__ == '__main__':
-    app.run(host='localhost', port=2000, debug=True)
