@@ -1,6 +1,9 @@
 from flask import render_template, request, redirect, session, Blueprint
 from spotify import app_Authorization, search_song, user_Authorization
 from openaiapi import generar_respuesta
+from dotenv import load_dotenv
+
+
 
 mod = Blueprint('controllers', __name__, url_prefix='')
 
@@ -21,6 +24,7 @@ def login():
 
 @mod.route("/callback")
 def callback():
+    
     header = user_Authorization()
     session["user"] = header
     return redirect("/song")

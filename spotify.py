@@ -4,7 +4,9 @@ import json
 import requests
 import base64
 import urllib.parse
+from dotenv import load_dotenv
 
+load_dotenv()
 # Client Keys
 
 CLIENT_ID = "e68285acd05e49bb9134e5bcc2622778"
@@ -41,6 +43,7 @@ def app_Authorization():
     }
     url_args = "&".join(["{}={}".format(key, urllib.parse.quote(val)) for key,val in auth_query_parameters.items()])
     auth_url = f"{SPOTIFY_AUTH_URL}/?{url_args}"
+
     return auth_url
 
 #User allows us to acces there spotify
@@ -57,9 +60,10 @@ def user_Authorization():
     client_encode = str(client_encode, "utf-8")
     headers = {"Authorization": f"Basic {client_encode}"}
     post_request = requests.post(SPOTIFY_TOKEN_URL, data=code_payload, headers=headers)
-
     # Tokens are Returned to Application
+    
     response_data = json.loads(post_request.text)
+    
     access_token = response_data["access_token"]
     refresh_token = response_data["refresh_token"]
     token_type = response_data["token_type"]

@@ -1,8 +1,12 @@
 import openai
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 #authentication stuff
 openai.api_key = os.getenv("OPENAI_API_KEY")
+# engine = "text-davinci-edit-001"
 engine = "text-davinci-003" #or "curie-001"
 
 
@@ -12,7 +16,7 @@ def generar_respuesta(song_name, artista):
               f"Descripción: Escriba el nombre de una canción y obtendrá recomendaciones de otras canciones similares.\n"
               f"Contexto: El modelo debe considerar la letra, el género musical, el artista y la popularidad de la canción de entrada para generar las recomendaciones.\n"
               f"Ejemplo de entrada: '{song_name}'\n"
-              f"Instrucciones: El modelo debe generar una lista de las 10 canciones más similares a '{song_name}', teniendo en cuenta la letra, el género musical, el artista y la popularidad de la canción.")
+              f"Instrucciones: El modelo debe generar una lista de las 10 canciones más similares a '{song_name if song_name else 'No sabe igual'} {'de ' if artista else ''} {artista if artista else ''}', teniendo en cuenta la letra, el género musical, el artista y la popularidad de la canción.")
   completions = openai.Completion.create(
     engine=engine,
     prompt=prompt,
